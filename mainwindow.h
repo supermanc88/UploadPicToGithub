@@ -2,6 +2,12 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QProcess>
+
+//只是声明类，在cpp文件中再引入头文件
+class QString;
+
+
 
 namespace Ui {
 class MainWindow;
@@ -25,8 +31,13 @@ public slots:
 private slots:
     void on_getClipboardBitmap_clicked();
 
+    void on_openPtn_clicked();
+
 private:
     Ui::MainWindow *ui;
+    QString picSavePath;
+    QString gitRootPath;
+//    QProcess process;
 };
 
 #endif // MAINWINDOW_H
