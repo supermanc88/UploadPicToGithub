@@ -103,29 +103,30 @@ void MainWindow::on_getClipboardBitmap_clicked()
         git commit -m "add a pic"
         git push
     */
-    QString batContent = "@echo off\r\ngit add %1\r\ngit commit -m \"add a pic\"\r\ngit push\r\n";
+    QString batContent = QString("@echo off\r\ngit add \"%1\"\r\ngit commit -m \"add a pic\"\r\ngit push\r\n").arg(picPath);
     QString batPath = this->picSavePath + "upload.bat";
 
 
     QFile batFile(batPath);
-    if(!batFile.exists())
+//    if(!batFile.exists())
+//    {
+    if(!batFile.open(QIODevice::ReadWrite))
     {
-        if(!batFile.open(QIODevice::ReadWrite))
-        {
-            qDebug()<<"打开失败";
-        }
-        batFile.write(batContent.toStdString().c_str());
-        batFile.close();
+        qDebug()<<"打开失败";
     }
+    batFile.write(batContent.toStdString().c_str());
+    batFile.close();
+//    }
 
 
     //调用批处理文件上传该图片
-    QProcess process;
-    QString writeText = batPath + " " + picPath;
-    process.start(writeText);
-    process.waitForFinished();
-    qDebug() << process.readAllStandardOutput()<<endl;
+//    QProcess process;
+    QString writeText = batPath;
+//    process.start("cmd.exe", QStringList()<<"/c"<<batPath);
+//    process.waitForFinished();
+//    qDebug() << process.readAllStandardOutput()<<endl;
 
+   system(writeText.toStdString().c_str());
     /****************************暂时不使用上传***************************
     QProcess process;
     process.start("cmd");
