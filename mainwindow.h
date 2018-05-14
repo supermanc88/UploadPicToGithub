@@ -33,6 +33,8 @@ private slots:
 
     void on_openPtn_clicked();
 
+    void uploadComplete();
+
 private:
     Ui::MainWindow *ui;
     QString picSavePath;

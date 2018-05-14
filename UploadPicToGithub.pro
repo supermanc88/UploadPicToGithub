@@ -24,8 +24,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    uploadthread.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    uploadthread.h
 
 FORMS    += mainwindow.ui

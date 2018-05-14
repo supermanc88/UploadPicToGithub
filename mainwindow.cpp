@@ -11,6 +11,14 @@
 #include <QDateTime>
 #include <QFile>
 
+#include "uploadthread.h"
+
+#include <QMessageBox>
+#include <QTextCodec>
+
+
+QString globalBatPath;
+QString globalPicSavePath;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -103,9 +111,12 @@ void MainWindow::on_getClipboardBitmap_clicked()
         git commit -m "add a pic"
         git push
     */
-    QString batContent = QString("@echo off\r\ngit add \"%1\"\r\ngit commit -m \"add a pic\"\r\ngit push\r\n").arg(picPath);
+    QString batContent1 = QString("@echo off\r\ngit add \"%1\"\r\ngit commit -m \"add a pic\"\r\ngit push\r\n").arg(picPath);
+    QString batContent = QString::fromLatin1(batContent1.toStdString().c_str());
     QString batPath = this->picSavePath + "upload.bat";
+    globalPicSavePath = this->picSavePath;
 
+    //QTextCodec::setCodecForCStrings(codec);
 
     QFile batFile(batPath);
 //    if(!batFile.exists())
@@ -120,13 +131,18 @@ void MainWindow::on_getClipboardBitmap_clicked()
 
 
     //调用批处理文件上传该图片
+    //创建线程去处理
 //    QProcess process;
     QString writeText = batPath;
+    globalBatPath = batPath;
 //    process.start("cmd.exe", QStringList()<<"/c"<<batPath);
 //    process.waitForFinished();
 //    qDebug() << process.readAllStandardOutput()<<endl;
 
-   system(writeText.toStdString().c_str());
+//   system(writeText.toStdString().c_str());
+    UploadThread * upThread = new UploadThread(this);
+    connect(upThread, SIGNAL(finished()), this, SLOT(uploadComplete()));
+    upThread->start();
     /****************************暂时不使用上传***************************
     QProcess process;
     process.start("cmd");
@@ -235,4 +251,9 @@ void MainWindow::on_openPtn_clicked()
 
     }
 
+}
+
+void MainWindow::uploadComplete()
+{
+    QMessageBox::warning(this,tr("upload"),tr("upload is ok"),QMessageBox::Yes);
 }
