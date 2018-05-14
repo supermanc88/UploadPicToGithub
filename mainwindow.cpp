@@ -9,6 +9,7 @@
 //#include <QMessageBox>
 #include <QDir>
 #include <QDateTime>
+#include <QFile>
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -32,27 +33,98 @@ void MainWindow::GetPicFromCurrentClipBoard()
 
 void MainWindow::on_getClipboardBitmap_clicked()
 {
-    this->ui->label->setText("1111111111111111111");
+    this->ui->label->setText("uploading...");
     QClipboard * clipBoard = QApplication::clipboard();
     QPixmap pixmap = clipBoard->pixmap();
-    QString picPath("F:\\MarkDownPic\\Image\\test\\getpic2.png");
+    QString picPath("");
     QDateTime dateTime;
     dateTime = QDateTime::currentDateTime();
     QString dateTimeFormat = "yyyyMMddHHmmss";
     dateTimeFormat = dateTime.toString("yyyyMMddHHmmss");
-    picPath = this->picSavePath + dateTimeFormat + ".png";
+
+    QString picSaveName = this->ui->picSaveName->text();
+
+    if(picSaveName == "")
+    {
+        picPath = this->picSavePath + dateTimeFormat + ".png";
+    }
+    else
+    {
+        picPath = this->picSavePath + picSaveName + ".png";
+    }
+
     qDebug()<<picPath;
     pixmap.save(picPath);
+
+
+    /********************获取github项目下图片保存路径*********************/
+    QStringList strList = picPath.split('\\');
+    int index = 0;
+    for(int i=0; i<strList.size(); i++)
+    {
+        if(strList[i] == this->projectName)
+        {
+            index = i;
+            break;
+        }
+    }
+    QString gitPicPath = "\\";
+    for(int i=index+1; i<strList.size(); i++)
+    {
+        if(i == strList.size() - 1)
+        {
+            gitPicPath += strList[i];
+        }
+        else
+        {
+            gitPicPath += strList[i] + "\\";
+        }
+
+    }
+    qDebug()<< "gitPicPath" <<gitPicPath<<endl;
+    /********************获取github项目下图片保存路径*********************/
 
     //清空剪切板
     clipBoard->clear();
 
-    QString clipText = "heeemy.cheng@gmail.com";
-    clipBoard->setText(clipText);
+
 
     /*********************************************
      * 完成上传功能，但是卡顿严重
      *********************************************/
+    /***
+     * 改用调用批处理
+     */
+    //释放批处理文件到图片存放目录
+    /*
+        @echo off
+
+        git add %1
+        git commit -m "add a pic"
+        git push
+    */
+    QString batContent = "@echo off\r\ngit add %1\r\ngit commit -m \"add a pic\"\r\ngit push\r\n";
+    QString batPath = this->picSavePath + "upload.bat";
+
+
+    QFile batFile(batPath);
+    if(!batFile.exists())
+    {
+        if(!batFile.open(QIODevice::ReadWrite))
+        {
+            qDebug()<<"打开失败";
+        }
+        batFile.write(batContent.toStdString().c_str());
+        batFile.close();
+    }
+
+
+    //调用批处理文件上传该图片
+    QProcess process;
+    QString writeText = batPath + " " + picPath;
+    process.start(writeText);
+    process.waitForFinished();
+    qDebug() << process.readAllStandardOutput()<<endl;
 
     /****************************暂时不使用上传***************************
     QProcess process;
@@ -76,12 +148,13 @@ void MainWindow::on_getClipboardBitmap_clicked()
     process.waitForFinished();
     qDebug()<<QString::fromLocal8Bit(process.readAllStandardOutput())<<endl;
 
-    process.write("git add ./\n");
+    QString writeText2 = "git add " + picPath + "\n";
+    process.write(writeText2.toStdString().c_str());
     //process.closeWriteChannel();
     process.waitForFinished();
     qDebug()<<QString::fromLocal8Bit(process.readAllStandardOutput())<<endl;
 
-    process.write("git commit -m \"qt add one pic\"\n");
+    process.write("git commit\n");
     //process.closeWriteChannel();
     process.waitForFinished();
     qDebug()<<QString::fromLocal8Bit(process.readAllStandardOutput())<<endl;
@@ -93,8 +166,18 @@ void MainWindow::on_getClipboardBitmap_clicked()
 
 
      ******************************暂时不使用上传*************************/
+
+    //拼接远程图片路径
+    gitPicPath.replace(QString("\\"), QString("/"));
+    QString remotePicPath = "https://github.com/supermanc88/" + this->projectName + "/raw/master" + gitPicPath;
+
+    QString clipText = remotePicPath;
+    clipBoard->setText(clipText);
+
     //上传成功之后提示
     this->ui->label->setText(picPath);
+    //上传完毕之后清空文件名
+    this->ui->picSaveName->setText("");
 }
 
 void MainWindow::on_openPtn_clicked()
@@ -123,11 +206,24 @@ void MainWindow::on_openPtn_clicked()
             QDir cdupPath(tempPath);
             cdupPath.cdUp();
             tempPath = cdupPath.path();
-            gitTextPath = tempPath + "\\.git";
+            gitTextPath = tempPath + "/.git";
             dirPath = new QDir(gitTextPath);
         }
 
         this->gitRootPath = tempPath;
+
+
+        /***********************获取项目名***********************/
+        if(tempPath.at(tempPath.length() -1 ) != "/")
+        {
+            tempPath += "/";
+        }
+        QStringList strList = tempPath.split('/');
+        this->projectName = strList[ strList.size()-2 ];
+
+        qDebug()<< "222222222"<<this->projectName<<endl;
+        /***********************获取项目名***********************/
+
 
         this->ui->gitRootPaht->setText(this->gitRootPath);
 

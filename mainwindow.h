@@ -37,6 +37,7 @@ private:
     Ui::MainWindow *ui;
     QString picSavePath;
     QString gitRootPath;
+    QString projectName;
 //    QProcess process;
 };
 
